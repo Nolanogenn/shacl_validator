@@ -1,0 +1,50 @@
+import re
+import logging
+
+logger = logging.getLogger(__name__)
+
+pattern = r'[^ ]+'
+def getNamespace(uri, prefixes):
+    name, _ = url.split(':')
+    try:
+        return prefixes[name]
+    except Exception as e:
+        raise e
+
+class Resource():
+    def __init__(self, uri):
+        self.namespace = getNamespace(uri, prefixes)
+
+class Graph():
+    def __init__(self, graph_str):
+        self.graph_str = graph_str
+        logging.basicConfig(filename='graphParser.log', level=logging.DEBUG)
+        self.prefixes = {}
+        self.resources = set()
+        self.properties = {}
+        self.edges = {}
+
+    def parse_prefix_line(self,line):
+        _, name, url, _ = line.split(' ')
+        if name in self.prefixes:
+            raise Exception(f"overlap for name {name}, already present with val {self.prefixes[name]}")
+        self.prefixes[name[:-1]] = url
+
+    def parse(self):
+        for line in self.graph_str:
+            try:
+                if line.startswith("#"):
+                    continue
+                if line.startswith("@"):
+                    self.parse_prefix_line(line)
+                else:
+                    print(re.findall(pattern, line))
+                    if line.endswith('.'):
+                        break
+            except Exception as e:
+                logger.error(e)
+
+
+         
+
+
