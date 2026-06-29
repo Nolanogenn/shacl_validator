@@ -3,7 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-pattern = r'[^ ]+'
+pattern = r'[^ ;]+'
 def getNamespace(uri, prefixes):
     if uri == 'a':
         return prefixes['rdf']
@@ -36,11 +36,16 @@ class Graph():
         self.prefixes[name[:-1]] = url[1:-1]
     
     def getFullUri(self, uri):
+        if uri.startswith('<') and uri.endswith('>'):
+            return uri[1:-1]
         namespace = getNamespace(uri, self.prefixes)
         name = uri.split(':')[1]
         return f"{namespace}{name}"
 
     def parse(self):
+        currSubj = None
+        pred = None
+        obj = None
         for line in self.graph_str:
             try:
                 if line.startswith("#"):
@@ -49,18 +54,19 @@ class Graph():
                     self.parse_prefix_line(line)
                 else:
                     resources = re.findall(pattern, line)
-                    print(resources)
-                    for resource in resources:
-                        if resource.startswith('<') and resource.endswith('>'):
-                            fullUri = resource[1:-1]
-                            resource = resource[1:-1]
+                    resources = [self.getFullUri(u) for u in resources]
+                    nRes = len(resources)
+                    if resources:
+                        if nRes == 1:
+                            currSubj = resources[0]
+                        elif nRes == 3:
+                            currSubj, pred, obj = resources
                         else:
-                            fullUri = self.getFullUri(resource)
-                        if resource != fullUri:
-                            self.shortForms[resource] = fullUri
-                        self.resources.add(fullUri)
-                    if line.endswith('.'):
-                        break
+                            pred, obj = resources
+                    else:
+                        currSubj = pred = obj = None
+                    if pred and obj:
+                        print(currSubj, pred, obj) 
             except Exception as e:
                 logger.error(e)
 
